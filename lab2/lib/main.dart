@@ -7,11 +7,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Lab 2 Serikov',
+      title: 'Лабораторна 2 Серіков',
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: MyHomePage(title: 'Lab 2 Serikov'),
+      home: MyHomePage(title: 'Лабораторна 2 Серіков'),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -29,7 +29,10 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool wasGenerated = false;
   bool wasSorted = false;
-  static final lengths = new List<int>.generate(10, (i) => i * 2 + 10);
+  bool displayArrays = false;
+  bool displaySortedArrays = false;
+  TextEditingController lenController = new TextEditingController();
+  TextEditingController maxController = new TextEditingController();
   static final size = 10;
   var grid;
   String gridStr = '';
@@ -39,11 +42,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void generate() {
     setState(() {
+      int len = lenController.text.length > 0 ? int.parse(lenController.text) : 1000;
+      int max = maxController.text.length > 0 ? int.parse(maxController.text) : 9;
+      var lengths = new List<int>.generate(10, (i) => (i + 1) * len);
       grid = List<List<int>>.generate(size,
-          (i) => List<int>.generate(lengths[i], (j) => Random().nextInt(9)));
+          (i) => List<int>.generate(lengths[i], (j) => Random().nextInt(max + 1)));
       wasGenerated = true;
       wasSorted = false;
-      gridStr = grid.toString().replaceAll('], [', ']\n[');
+      gridStr = grid.toString().replaceAll('], [', ']\n\n[');
       gridStr = gridStr.substring(1, gridStr.length - 1);
       sortedGridStr = '';
     });
@@ -52,11 +58,23 @@ class _MyHomePageState extends State<MyHomePage> {
   void sort() {
     setState(() {
       grid = List<List<int>>.generate(size, (i) => sortHoare(grid[i], i));
-      sortedGridStr = grid.toString().replaceAll('], [', ']\n[');
+      sortedGridStr = grid.toString().replaceAll('], [', ']\n\n[');
       sortedGridStr = sortedGridStr.substring(1, sortedGridStr.length - 1);
       wasSorted = true;
-      timesStr = times.toString().replaceAll(', ', 'μs\nTime is: ');
-      timesStr = 'Time is: ' + timesStr.substring(1, timesStr.length - 1) + 'μs';
+      timesStr = times.toString().replaceAll(', ', '*10^-6с\nЧас: ');
+      timesStr = 'Час: ' + timesStr.substring(1, timesStr.length - 1) + '*10^-6с';
+    });
+  }
+
+  void showArrays() {
+    setState(() {
+      displayArrays = !displayArrays;
+    });
+  }
+
+  void showSortedArrays() {
+    setState(() {
+      displaySortedArrays = !displaySortedArrays;
     });
   }
 
@@ -64,8 +82,6 @@ class _MyHomePageState extends State<MyHomePage> {
     Stopwatch _watch = new Stopwatch()..start();
     hoareSort(list, 0, list.length - 1);
     times[index] = _watch.elapsedMicroseconds;
-//    print(index);
-//    times[index] = 3;
     return list;
   }
 
@@ -105,17 +121,42 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: ListView(
           children: <Widget>[
-            Center(child: Text('Arrays:')),
+            Text(
+              "За замовчуванням кратність 1000, а max елемент 9"
+            ),
+            TextField(
+              decoration: new InputDecoration(labelText: "Введіть кратність довжин масивів"),
+              keyboardType: TextInputType.number,
+              controller: lenController,
+            ),
+            TextField(
+              decoration: new InputDecoration(labelText: "Введіть max значення елементів масиву"),
+              keyboardType: TextInputType.number,
+              controller: maxController,
+            ),
             RaisedButton(
               onPressed: generate,
-              child: Text('Generate'),
+              child: Text('Зенерувати масиви'),
             ),
-            Text(gridStr),
+            (wasGenerated ? RaisedButton(
+              onPressed: showArrays,
+              child: Text(!displayArrays ? 'Показати масиви повністю' : 'Сховати массиви'),
+            ): Text('')),
+            (wasGenerated ? SingleChildScrollView(child:
+            Text(displayArrays ? gridStr : ''),
+            ) : Text('')),
             (wasGenerated && !wasSorted
-                ? RaisedButton(onPressed: sort, child: Text('Sort'))
+                ? RaisedButton(
+                    onPressed: sort, child: Text('Відсортувати масиви'))
                 : Text('')),
-            Text(sortedGridStr + '\n'),
             (wasSorted && wasGenerated ? Text(timesStr) : Text('')),
+            (wasGenerated && wasSorted ? RaisedButton(
+              onPressed: showSortedArrays,
+              child: Text(!displaySortedArrays ? 'Показати відсортовані масиви повністю' : 'Сховати відсортовані массиви'),
+            ) : Text('')),
+            (wasGenerated && wasGenerated ? SingleChildScrollView(child:
+            Text(displaySortedArrays ? sortedGridStr : ''),
+            ) : Text('')),
           ],
         ));
   }
